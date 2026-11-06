@@ -148,4 +148,8 @@ void main() {
     expect(tokens?.cornerRadius, 10);
     expect(tokens?.separator, AkdoAppTheme.separator);
   });
+
+  test('mobile API configuration does not fall back to a local network host', () {
+    expect(() => ApiClient.baseUrl, throwsStateError);
+  });
 }

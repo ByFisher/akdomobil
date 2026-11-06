@@ -85,7 +85,7 @@ class StartScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Image.asset(
-                    'assets/logo/akdoqr.png',
+                    'assets/logo/akdo-monochrome.png',
                     height: 96,
                     fit: BoxFit.contain,
                   ),
@@ -203,9 +203,25 @@ class ApiClient {
   );
 
   static String get baseUrl {
-    if (_configuredBaseUrl.isNotEmpty) return _configuredBaseUrl;
     if (kIsWeb) return '';
-    return 'http://192.168.1.9:8081';
+    if (_configuredBaseUrl.isEmpty) {
+      throw StateError(
+        'API_BASE_URL tanımlı değil. Uygulamayı erişilebilir bir HTTPS API adresiyle derleyin.',
+      );
+    }
+
+    final uri = Uri.tryParse(_configuredBaseUrl);
+    if (uri == null ||
+        !uri.hasAuthority ||
+        uri.host.isEmpty ||
+        !{'http', 'https'}.contains(uri.scheme)) {
+      throw StateError('API_BASE_URL geçerli bir API adresi değil.');
+    }
+    if (kReleaseMode && uri.scheme != 'https') {
+      throw StateError('Yayın sürümünde API_BASE_URL HTTPS olmalıdır.');
+    }
+
+    return _configuredBaseUrl.replaceFirst(RegExp(r'/+$'), '');
   }
 
   static const String _cookieKey = 'akdo_cookie';
@@ -349,6 +365,8 @@ class _HomeMenuScreenState extends State<HomeMenuScreen> {
   String selectedCategory = 'all';
   String branchName = 'Merkez Şube';
   String search = '';
+  String? menuError;
+  bool loadingMenu = true;
   Map<String, dynamic>? member;
   Timer? timer;
 
@@ -366,7 +384,9 @@ class _HomeMenuScreenState extends State<HomeMenuScreen> {
       if (response.statusCode < 200 ||
           response.statusCode >= 300 ||
           body == null) {
-        return;
+        throw Exception(
+          ApiClient.error(response, 'Menü yüklenemedi.'),
+        );
       }
       final categoryRows = body['categories'] is List
           ? List<dynamic>.from(body['categories'])
@@ -401,8 +421,16 @@ class _HomeMenuScreenState extends State<HomeMenuScreen> {
             featured: item['featured'] == true,
           );
         }).toList();
+        menuError = null;
+        loadingMenu = false;
       });
-    } catch (_) {}
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        menuError = error.toString().replaceFirst('Exception: ', '');
+        loadingMenu = false;
+      });
+    }
   }
 
   Future<void> _logout() async {
@@ -490,7 +518,7 @@ class _HomeMenuScreenState extends State<HomeMenuScreen> {
               title: Row(
                 children: [
                   Image.asset(
-                    'assets/logo/akdoqr.png',
+                    'assets/logo/akdo-monochrome.png',
                     width: 58,
                     height: 50,
                     fit: BoxFit.contain,
@@ -669,6 +697,32 @@ class _HomeMenuScreenState extends State<HomeMenuScreen> {
               ),
             ),
             SliverToBoxAdapter(child: _HeroSection()),
+            if (menuError != null)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      Text(
+                        menuError!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                      TextButton(
+                        onPressed: _loadPublicMenu,
+                        child: const Text('Menüyü yeniden yükle'),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else if (loadingMenu)
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+              ),
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
@@ -2744,7 +2798,7 @@ class _MainDrawer extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(12, 16, 12, 24),
           children: [
-            Image.asset('assets/logo/akdoqr.png', height: 58),
+            Image.asset('assets/logo/akdo-monochrome.png', height: 58),
             const SizedBox(height: 20),
             _DrawerItem(
               icon: Icons.person_outline,
@@ -4869,7 +4923,7 @@ class _AdminScreenState extends State<AdminScreen> {
         backgroundColor: const Color(0xFF09090B),
         foregroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
-        title: Image.asset('assets/logo/akdoyonetim.jpg', height: 42),
+        title: Image.asset('assets/logo/akdo-monochrome.png', height: 42),
       ),
       drawer: authenticated
           ? Drawer(
@@ -4956,7 +5010,10 @@ class _AdminScreenState extends State<AdminScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Image.asset('assets/logo/akdoyonetim.jpg', height: 64),
+                      Image.asset(
+                        'assets/logo/akdo-monochrome.png',
+                        height: 64,
+                      ),
                       const SizedBox(height: 16),
                       const Text(
                         'Yönetim Merkezi',

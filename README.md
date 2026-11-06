@@ -47,9 +47,10 @@ edebilir. Yönetici, şef ve garson girişleri de uygulamada bulunur.
    flutter run --dart-define=API_BASE_URL=https://api.ornek.com
    ```
 
-   Gerçek Android cihazda `localhost` cihazın kendisini gösterir; geliştirme
-   bilgisayarının LAN adresini kullanın. Üretimde HTTPS kullanın. Web sürümü API
-   çağrılarını aynı origin'e gönderir.
+   Mobil derlemelerde erişilebilir bir API adresi zorunludur. Gerçek Android
+   cihazda `localhost` telefonun kendisini gösterir; geliştirme için aynı
+   ağdaki backend adresini, yayın için HTTPS API adresini kullanın. Web sürümü
+   API çağrılarını aynı origin'e gönderir.
 
 ## Çalıştırma
 
@@ -91,9 +92,9 @@ sunucu/proxy yapılandırmasıyla sağlayın.
 
 Uygulama API isteklerini `lib/main.dart` içindeki `ApiClient` üzerinden yapar.
 Derleme sırasında `--dart-define=API_BASE_URL=...` ile verilen değer Android ve
-iOS gibi web dışı hedeflerde API adresi olarak kullanılır. Değer verilmediğinde
-uygulamanın yerel geliştirme varsayılanı kullanılır. Web hedefi aynı origin'i
-kullanır.
+iOS gibi web dışı hedeflerde zorunludur. Mobil uygulama tanımlanmamış bir yerel
+IP adresine sessizce bağlanmaz; release derlemelerinde HTTPS zorunludur. Web
+hedefi aynı origin'i kullanır.
 
 ## Bildirimler ve KVKK
 
@@ -114,4 +115,4 @@ kullanır.
 ## Sürüm
 
 Uygulama sürümü `pubspec.yaml` dosyasındaki `version` alanından yönetilir. Şu anki
-sürüm: **1.0.0+1**.
+sürüm: **1.0.1+2**.
